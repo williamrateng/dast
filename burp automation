@@ -1,0 +1,52 @@
+import requests
+import time
+
+# Burp Suite API details
+burp_api_url = "http://localhost:1337"
+burp_api_key = "YOUR_API_KEY"
+
+# Start a new scan
+def start_scan(target_url):
+    scan_config = {
+        "scope": {
+            "include": [{"rule": target_url}],
+            "exclude": []
+        },
+        "scan_configurations": ["Crawl and Audit"],
+        "user_options": {}
+    }
+    response = requests.post(
+        f"{burp_api_url}/v0.1/scan",
+        headers={"Content-Type": "application/json", "X-Api-Key": burp_api_key},
+        json=scan_config
+    )
+    return response.json()["scan_id"]
+
+# Check scan status
+def check_scan_status(scan_id):
+    response = requests.get(
+        f"{burp_api_url}/v0.1/scan/{scan_id}",
+        headers={"X-Api-Key": burp_api_key}
+    )
+    return response.json()["scan_status"]
+
+# Main function to run the scan
+def run_scan(target_url):
+    scan_id = start_scan(target_url)
+    print(f"Scan started with ID: {scan_id}")
+
+    while True:
+        status = check_scan_status(scan_id)
+        print(f"Current scan status: {status}")
+        if status == "succeeded":
+            print("Scan completed successfully")
+            break
+        elif status == "failed":
+            print("Scan failed")
+            break
+        time.sleep(30)
+
+# Example usage
+if __name__ == "__main__":
+    target_url = "http://example.com"  # Replace with your target URL
+    run_scan(target_url)
